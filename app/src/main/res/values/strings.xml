@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Argora</string>
+    <string name="default_web_client_id">YOUR_WEB_CLIENT_ID_HERE.apps.googleusercontent.com</string>
+
+
+    <string-array name="asset_types">
+        <item>stock</item>
+        <item>mutual_fund</item>
+        <item>etf</item>
+        <item>crypto</item>
+        <item>bond</item>
+        <item>fd</item>
+        <item>real_estate</item>
+        <item>gold</item>
+        <item>other</item>
+    </string-array>
+</resources>
