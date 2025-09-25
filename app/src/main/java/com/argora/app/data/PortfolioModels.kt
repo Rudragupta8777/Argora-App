@@ -43,7 +43,9 @@ data class BasicMetrics(
 data class AiAnalysis(
     val riskScore: Int,
     val liquidityScore: Int,
-    val recommendations: List<Recommendation>
+    val recommendations: List<Recommendation>,
+    // --- ADD THIS NEW FIELD ---
+    val holdings_with_real_time_prices: List<Holding>? // It's a list of your existing Holding model
 )
 
 // This class was missing

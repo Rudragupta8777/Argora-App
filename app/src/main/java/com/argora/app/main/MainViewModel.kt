@@ -36,6 +36,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private var searchJob: Job? = null
 
+    // Cache for search results to avoid repeated API calls
+    private val searchCache = mutableMapOf<String, List<StockMatch>>()
+    private var lastSearchQuery = ""
+
     // This should be loaded from SharedPreferences after login
     private val authToken: String?
         get() = SessionManager.apiToken?.let { "Bearer $it" }
@@ -50,7 +54,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val response = RetrofitInstance.api.getPortfolio(authToken!!)
                 if (response.isSuccessful && response.body() != null) {
-                    _holdings.value = response.body()?.portfolio?.holdings ?: emptyList()
+                    val analysis = response.body()?.analysis
+
+                    // Use the holdings list from the AI analysis because it contains the live prices.
+                    // Fall back to the main portfolio list if the AI doesn't provide one.
+                    _holdings.value = analysis?.aiAnalysis?.holdings_with_real_time_prices
+                        ?: response.body()?.portfolio?.holdings
+                                ?: emptyList()
+
                 } else {
                     _error.value = "Failed to fetch portfolio"
                 }
@@ -63,20 +74,65 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun searchStock(keywords: String) {
-        searchJob?.cancel() // Cancel previous job
-        if (keywords.length < 2) return
+        searchJob?.cancel()
+
+        // Clear results immediately for very short queries
+        if (keywords.length < 2) {
+            _searchResults.value = emptyList()
+            lastSearchQuery = keywords
+            return
+        }
+
+        // Check cache first for exact matches
+        val trimmedKeywords = keywords.trim().uppercase()
+        searchCache[trimmedKeywords]?.let { cachedResults ->
+            _searchResults.value = cachedResults
+            return
+        }
+
+        // Check if this is a refinement of the previous search
+        val isRefinement = lastSearchQuery.isNotEmpty() &&
+                trimmedKeywords.startsWith(lastSearchQuery.trim().uppercase()) &&
+                trimmedKeywords.length > lastSearchQuery.length
+
+        lastSearchQuery = keywords
 
         searchJob = viewModelScope.launch {
-            delay(300) // Debounce to avoid too many API calls
+            // Reduce delay for better responsiveness
+            // Use shorter delay for refinements
+            delay(if (isRefinement) 150 else 250)
+
             try {
                 val response = AlphaVantageRetrofitInstance.api.searchSymbol(
                     AlphaVantageRetrofitInstance.createSearchQuery(keywords)
                 )
-                _searchResults.value = response.bestMatches
+
+                val results = response.bestMatches ?: emptyList()
+
+                // Cache the results
+                searchCache[trimmedKeywords] = results
+
+                // Limit cache size to prevent memory issues
+                if (searchCache.size > 50) {
+                    val oldestKey = searchCache.keys.first()
+                    searchCache.remove(oldestKey)
+                }
+
+                _searchResults.value = results
+
             } catch (e: Exception) {
-                Log.e("MainViewModel", "Stock search failed", e)
+                // Don't log cancellation exceptions as errors
+                if (e !is kotlinx.coroutines.CancellationException) {
+                    Log.e("MainViewModel", "Stock search failed", e)
+                }
+                _searchResults.value = emptyList()
             }
         }
+    }
+
+    // Method to clear search cache if needed
+    fun clearSearchCache() {
+        searchCache.clear()
     }
 
     fun addHolding(newHolding: NewHolding) {

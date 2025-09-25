@@ -6,7 +6,6 @@ import retrofit2.http.QueryMap
 
 object AlphaVantageRetrofitInstance {
     private const val BASE_URL = "https://www.alphavantage.co/"
-    // IMPORTANT: Paste your Alpha Vantage API Key here
     private const val API_KEY = "4SRLY3CD2EOYZ2U4"
 
     val api: AlphaVantageApiService by lazy {

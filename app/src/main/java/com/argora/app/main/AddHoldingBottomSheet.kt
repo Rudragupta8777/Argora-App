@@ -1,6 +1,5 @@
 package com.argora.app.main
 
-import android.R
 import android.app.DatePickerDialog
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -10,6 +9,7 @@ import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.activityViewModels
+import com.argora.app.R
 import com.argora.app.data.NewHolding
 import com.argora.app.data.StockMatch
 import com.argora.app.databinding.DialogAddHoldingBinding
@@ -36,22 +36,35 @@ class AddHoldingBottomSheet : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val adapter =
-            ArrayAdapter<StockMatch>(requireContext(), R.layout.simple_dropdown_item_1line)
-        binding.actvStockSearch.setAdapter(adapter)
-
-        setupListeners(adapter)
-        setupObservers(adapter)
+        setupAutoCompleteAdapter()
+        setupListeners()
+        setupObservers()
     }
 
-    private fun setupListeners(adapter: ArrayAdapter<StockMatch>) {
+    private fun setupAutoCompleteAdapter() {
+        val adapter = ArrayAdapter<StockMatch>(
+            requireContext(),
+            R.layout.dropdown_menu_item,
+            mutableListOf()
+        )
+        binding.actvStockSearch.setAdapter(adapter)
+    }
+
+    private fun setupListeners() {
         binding.actvStockSearch.doOnTextChanged { text, _, _, _ ->
-            viewModel.searchStock(text.toString())
-            selectedStock = null // Clear selection when text changes
+            text?.toString()?.let { query ->
+                if (query.length >= 2) {
+                    viewModel.searchStock(query)
+                } else {
+                    binding.actvStockSearch.setAdapter(ArrayAdapter(requireContext(), R.layout.dropdown_menu_item, emptyList<StockMatch>()))
+                }
+            }
+            selectedStock = null
         }
 
-        binding.actvStockSearch.setOnItemClickListener { parent, _, position, _ ->
-            selectedStock = parent.getItemAtPosition(position) as StockMatch
+        binding.actvStockSearch.setOnItemClickListener { _, _, position, _ ->
+            val adapter = binding.actvStockSearch.adapter as ArrayAdapter<StockMatch>
+            selectedStock = adapter.getItem(position)
         }
 
         binding.etPurchaseDate.setOnClickListener {
@@ -63,28 +76,31 @@ class AddHoldingBottomSheet : BottomSheetDialogFragment() {
         }
     }
 
-    private fun setupObservers(adapter: ArrayAdapter<StockMatch>) {
+    private fun setupObservers() {
         viewModel.searchResults.observe(viewLifecycleOwner) { matches ->
-            adapter.clear()
-            adapter.addAll(matches)
-            adapter.notifyDataSetChanged()
+            val adapter = ArrayAdapter(requireContext(), R.layout.dropdown_menu_item, matches)
+            binding.actvStockSearch.setAdapter(adapter)
         }
     }
 
     private fun showDatePicker() {
         val calendar = Calendar.getInstance()
+
+        // Use default DatePickerDialog without any custom theme
         val datePickerDialog = DatePickerDialog(
             requireContext(),
             { _, year, month, dayOfMonth ->
-                val selectedDate = Calendar.getInstance()
-                selectedDate.set(year, month, dayOfMonth)
-                val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+                val selectedDate = Calendar.getInstance().apply {
+                    set(year, month, dayOfMonth)
+                }
+                val format = SimpleDateFormat("yyyy-MM-dd", Locale.US)
                 binding.etPurchaseDate.setText(format.format(selectedDate.time))
             },
             calendar.get(Calendar.YEAR),
             calendar.get(Calendar.MONTH),
             calendar.get(Calendar.DAY_OF_MONTH)
         )
+
         datePickerDialog.show()
     }
 
@@ -112,7 +128,7 @@ class AddHoldingBottomSheet : BottomSheetDialogFragment() {
         )
 
         viewModel.addHolding(newHolding)
-        dismiss() // Close the dialog
+        dismiss()
     }
 
     override fun onDestroyView() {

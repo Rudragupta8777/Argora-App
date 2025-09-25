@@ -4,24 +4,31 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
+    android:background="@color/black"
     android:padding="16dp">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Add New Holding"
+        android:textColor="@color/green"
+        android:textAlignment="center"
+        android:layout_gravity="center"
+        android:textStyle="bold"
         android:layout_marginBottom="16dp"
         android:textAppearance="@style/TextAppearance.Material3.TitleLarge"/>
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="50dp"
         android:hint="Search Stock (e.g., Reliance)">
 
         <AutoCompleteTextView
             android:id="@+id/actvStockSearch"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="5dp"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="match_parent" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <LinearLayout
@@ -33,8 +40,9 @@
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="2dp"
+            android:layout_marginEnd="2dp"
             android:layout_weight="1"
-            android:layout_marginEnd="8dp"
             android:hint="Quantity">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -53,6 +61,8 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etAvgBuyPrice"
                 android:layout_width="match_parent"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="2dp"
                 android:layout_height="wrap_content"
                 android:inputType="numberDecimal" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -68,16 +78,21 @@
             android:id="@+id/etPurchaseDate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginStart="2dp"
+            android:layout_marginEnd="2dp"
             android:focusable="false"
             android:clickable="true"/>
     </com.google.android.material.textfield.TextInputLayout>
 
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSave"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Save Holding" />
+        android:text="Save Holding"
+        android:textSize="16sp"
+        android:textColor="@color/black"
+        android:backgroundTint="@color/white"/>
 
 </LinearLayout>
